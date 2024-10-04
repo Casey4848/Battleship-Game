@@ -19,11 +19,16 @@ def start_server(host, port):
     print(f"Server listening on {host}:{port}")
 
     client_id = 1
-    while client_id <= 2:
-        client_socket, addr = server.accept()
-        client_handler = threading.Thread(target=handle_client, args=(client_socket, client_id))
-        client_handler.start()
-        client_id += 1
+    try:
+        while client_id <= 2:
+            client_socket, addr = server.accept()
+            client_handler = threading.Thread(target=handle_client, args=(client_socket, client_id))
+            client_handler.start()
+            client_id += 1
+    except KeyboardInterrupt:
+        print("Server is shutting down...")
+    finally:
+        server.close()
 
 if __name__ == "__main__":
     start_server("0.0.0.0", 9999)
