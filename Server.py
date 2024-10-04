@@ -5,6 +5,8 @@ import logging
 # Configure logging to log error messages
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
+clients = []
+
 def handle_client(client_socket, client_id):
     with client_socket:
         try:
@@ -13,11 +15,22 @@ def handle_client(client_socket, client_id):
                 message = client_socket.recv(1024)
                 if not message:
                     break
-                print(f"Client {client_id} says: {message.decode()}")
-                client_socket.sendall(message)
+                formatted_message = f"Client {client_id} says: {message.decode()}"
+                print(formatted_message)
+                broadcast_message(client_socket, formatted_message.encode())
             print(f"Client {client_id} disconnected")
         except socket.error as e:
             logging.error(f"Socket error with client {client_id}: {e}")
+        finally:
+            clients.remove(client_socket)
+
+def broadcast_message(sender_socket, message):
+    for client in clients:
+        if client != sender_socket:
+            try:
+                client.sendall(message)
+            except socket.error as e:
+                logging.error(f"Error sending message to client: {e}")
 
 def start_server(host, port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,6 +43,7 @@ def start_server(host, port):
         while client_id <= 2:
             try:
                 client_socket, addr = server.accept()
+                clients.append(client_socket)
                 client_handler = threading.Thread(target=handle_client, args=(client_socket, client_id))
                 client_handler.start()
                 client_id += 1
