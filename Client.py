@@ -25,6 +25,6 @@ def send_receive_messages(client):
         client.close()
 
 if __name__ == "__main__":
-    client = connect_to_server("127.0.0.1", 9999)
+    client = connect_to_server("127.0.0.1", 5444)
     if client:
         send_receive_messages(client)
