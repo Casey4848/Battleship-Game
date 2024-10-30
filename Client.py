@@ -1,3 +1,4 @@
+import json
 import socket
 import threading
 import logging
@@ -5,13 +6,30 @@ import logging
 # Configure logging to log only error messages
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
+def send_message(client_socket, message):
+    try:
+        client_socket.sendall(json.dumps(message).encode())
+    except socket.error as e:
+        logging.error(f"Error sending message: {e}")
+
+def receive_message(client_socket):
+    try:
+        return json.loads(client_socket.recv(1024).decode())
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON decode error: {e}")
+    except socket.error as e:
+        logging.error(f"Socket error: {e}")
+    return None
+
 def receive_messages(client_socket):
     while True:
         try:
-            message = client_socket.recv(1024)
+            message = receive_message(client_socket)
             if not message:
                 break
-            print(f"\n{message.decode()}")
+            if message['type'] == 'chat' or message['type'] == 'system':
+                print(f"\n{message['message']}")
+            # Handle other message types
         except socket.error as e:
             logging.error(f"Socket error: {e}")
             break
@@ -31,8 +49,9 @@ def send_receive_messages(client):
     receive_thread.start()
     try:
         while True:
-            message = input("Enter message: ")
-            client.sendall(message.encode())
+            message_text = input("Enter message: ")
+            message = {"type": "chat", "message": message_text}
+            send_message(client, message)
     except socket.error as e:
         logging.error(f"Socket error: {e}")
     finally:
