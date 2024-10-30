@@ -29,6 +29,19 @@ def receive_messages(client_socket):
                 break
             if message['type'] == 'chat' or message['type'] == 'system':
                 print(f"\n{message['message']}")
+            elif message['type'] == 'move':
+                print(f"\nPlayer {message['client_id']} attacked {message['move']} and it was a {message['result']}.")
+            elif message['type'] == 'turn':
+                print(f"\n{message['message']}")
+                # Prompt player to make a move
+                move = input("Enter your move (e.g., A1): ")
+                send_message(client_socket, {'type': 'move', 'move': move})
+            elif message['type'] == 'game_state':
+                print("\nGame State Updated:", message['state'])
+            elif message['type'] == 'welcome':
+                print(f"Welcome, Player {message['client_id']}!")
+            elif message['type'] == 'win':
+                print(f"Player {message['client_id']} has won the game!")
             # Handle other message types
         except socket.error as e:
             logging.error(f"Socket error: {e}")
