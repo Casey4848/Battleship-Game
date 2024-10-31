@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import logging
+import argparse
 
 # Configure logging to log only error messages
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,7 +43,6 @@ def receive_messages(client_socket):
                 print(f"Welcome, Player {message['client_id']}!")
             elif message['type'] == 'win':
                 print(f"Player {message['client_id']} has won the game!")
-            # Handle other message types
         except socket.error as e:
             logging.error(f"Socket error: {e}")
             break
@@ -71,7 +71,12 @@ def send_receive_messages(client):
         client.close()
         print("Disconnected from server")
 
-if __name__ == "__main__":    
-    client = connect_to_server("127.0.0.1", 5444)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Connect to the Battleship server.")
+    parser.add_argument('--host', type=str, required=True, help='Server IP address')
+    parser.add_argument('--port', type=int, required=True, help='Server port')
+    args = parser.parse_args()
+    
+    client = connect_to_server(args.host, args.port)
     if client:
         send_receive_messages(client)

@@ -38,12 +38,12 @@ def handle_join(client_socket, message, client_id):
     clients.append(client_socket)
     broadcast_message(client_socket, {'type': 'system', 'message': f"Player {client_id} joined"})
     send_message(client_socket, {'type': 'welcome', 'client_id': client_id})
+    if len(clients) == 2:
+        send_message(clients[game_state['turn'] - 1], {'type': 'turn', 'message': "It's your turn!"})
     broadcast_game_state()
 
 def handle_chat(client_socket, message, client_id):
-    message['client_id'] = client_id
-    message['message'] = f"Player {client_id} says: {message['message']}"
-    broadcast_message(client_socket, message)
+    broadcast_message(client_socket, {'type': 'chat', 'client_id': client_id, 'message': message['message']})
 
 def handle_move(client_socket, message, client_id):
     opponent_id = 2 if client_id == 1 else 1
@@ -67,6 +67,7 @@ def handle_move(client_socket, message, client_id):
         broadcast_message(client_socket, {'type': 'win', 'client_id': client_id})
 
     game_state['turn'] = opponent_id
+    send_message(clients[game_state['turn'] - 1], {'type': 'turn', 'message': "It's your turn!"})
     broadcast_game_state()
 
 def handle_message(client_socket, message, client_id):
@@ -107,6 +108,10 @@ def start_server(host, port):
         server.bind((host, port))
         server.listen(5)
         print(f"Server listening on {host}:{port}")
+        # Print server IP address
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print(f"Server IP address: {local_ip}")
         client_id = 1
         while client_id <= 2:
             try:
@@ -124,4 +129,4 @@ def start_server(host, port):
         server.close()
 
 if __name__ == "__main__":
-    start_server("0.0.0.0", 5444)
+    start_server("0.0.0.0", 5555)
