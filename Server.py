@@ -7,13 +7,6 @@ import logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 clients = []
-game_state = {
-    'turn': 1,
-    'players': {
-        1: {'board': [], 'hits': [], 'misses': []},
-        2: {'board': [], 'hits': [], 'misses': []}
-    }
-}
 
 def send_message(client_socket, message):
     try:
@@ -30,53 +23,19 @@ def receive_message(client_socket):
         logging.error(f"Socket error: {e}")
     return None
 
-def broadcast_game_state():
-    for client in clients:
-        send_message(client, {'type': 'game_state', 'state': game_state})
-
-def handle_join(client_socket, message, client_id):
-    clients.append(client_socket)
-    broadcast_message(client_socket, {'type': 'system', 'message': f"Player {client_id} joined"})
-    send_message(client_socket, {'type': 'welcome', 'client_id': client_id})
-    if len(clients) == 2:
-        send_message(clients[game_state['turn'] - 1], {'type': 'turn', 'message': "It's your turn!"})
-    broadcast_game_state()
+def handle_join(client_socket, message):
+    broadcast_message(client_socket, {"type": "system", "message": f"Player {message['client_id']} joined"})
 
 def handle_chat(client_socket, message, client_id):
-    broadcast_message(client_socket, {'type': 'chat', 'client_id': client_id, 'message': message['message']})
-
-def handle_move(client_socket, message, client_id):
-    opponent_id = 2 if client_id == 1 else 1
-    move = message['move']
-    result = 'miss'
-
-    if move in game_state['players'][opponent_id]['board']:
-        result = 'hit'
-        game_state['players'][client_id]['hits'].append(move)
-    else:
-        game_state['players'][client_id]['misses'].append(move)
-
-    broadcast_message(client_socket, {
-        'type': 'move',
-        'client_id': client_id,
-        'move': move,
-        'result': result
-    })
-
-    if len(game_state['players'][client_id]['hits']) == len(game_state['players'][opponent_id]['board']):
-        broadcast_message(client_socket, {'type': 'win', 'client_id': client_id})
-
-    game_state['turn'] = opponent_id
-    send_message(clients[game_state['turn'] - 1], {'type': 'turn', 'message': "It's your turn!"})
-    broadcast_game_state()
+    message['client_id'] = client_id
+    message['message'] = f"Player {client_id} says: {message['message']}"
+    broadcast_message(client_socket, message)
 
 def handle_message(client_socket, message, client_id):
     if message['type'] == 'join':
-        handle_join(client_socket, message, client_id)
+        handle_join(client_socket, message)
     elif message['type'] == 'chat':
         handle_chat(client_socket, message, client_id)
-    elif message['type'] == 'move':
-        handle_move(client_socket, message, client_id)
     # Add more handlers as needed
 
 def broadcast_message(sender_socket, message):
@@ -88,8 +47,10 @@ def handle_client(client_socket, client_id):
     with client_socket:
         try:
             print(f"Player {client_id} connected from {client_socket.getpeername()}")
-            join_message = {'type': 'join', 'client_id': client_id}
-            handle_join(client_socket, join_message, client_id)
+            join_message = {"type": "join", "client_id": client_id}
+            send_message(client_socket, join_message)
+            broadcast_message(client_socket, join_message)
+
             while True:
                 message = receive_message(client_socket)
                 if not message:
@@ -100,7 +61,7 @@ def handle_client(client_socket, client_id):
             logging.error(f"Socket error with client {client_id}: {e}")
         finally:
             clients.remove(client_socket)
-            broadcast_message(client_socket, {'type': 'system', 'message': f"Player {client_id} left"})
+            broadcast_message(client_socket, {"type": "system", "message": f"Player {client_id} left"})
 
 def start_server(host, port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,14 +69,11 @@ def start_server(host, port):
         server.bind((host, port))
         server.listen(5)
         print(f"Server listening on {host}:{port}")
-        # Print server IP address
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        print(f"Server IP address: {local_ip}")
         client_id = 1
         while client_id <= 2:
             try:
                 client_socket, addr = server.accept()
+                clients.append(client_socket)
                 client_handler = threading.Thread(target=handle_client, args=(client_socket, client_id))
                 client_handler.start()
                 client_id += 1
@@ -129,4 +87,4 @@ def start_server(host, port):
         server.close()
 
 if __name__ == "__main__":
-    start_server("0.0.0.0", 5555)
+    start_server("0.0.0.0", 5444)
