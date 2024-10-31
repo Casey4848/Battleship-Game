@@ -68,7 +68,8 @@ def start_server(host, port):
     try:
         server.bind((host, port))
         server.listen(5)
-        print(f"Server listening on {host}:{port}")
+        actual_host = socket.gethostbyname(socket.gethostname())
+        print(f"Server listening on {actual_host}:{port}")
         client_id = 1
         while client_id <= 2:
             try:
