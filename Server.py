@@ -15,6 +15,7 @@ game_state = {
     "turn": 1,
     "players": {}
 }
+state_lock = threading.Lock()  # Lock for synchronizing game state updates
 
 
 def send_message(client_socket, message):
@@ -22,6 +23,7 @@ def send_message(client_socket, message):
         client_socket.sendall(json.dumps(message).encode())
     except socket.error as e:
         logging.error(f"Error sending message: {e}")
+
 
 def receive_message(client_socket):
     try:
@@ -32,80 +34,100 @@ def receive_message(client_socket):
         logging.error(f"Socket error: {e}")
     return None
 
+
 def broadcast_game_state():
     message = {"type": "game_update", "state": game_state}
     for client in clients:
         send_message(client, message)
 
+
 def handle_chat(client_socket, message, client_id):
-    message['client_id'] = client_id
-    message['message'] = f"Player {client_id} says: {message['message']}"
-    broadcast_message(client_socket, message)
+    chat_message = {
+        "type": "chat",
+        "message": f"Player {client_id} says: {message['message']}",
+    }
+    for client in clients:
+        send_message(client, chat_message)
+
 
 def handle_turn(client_socket, message, client_id):
-    if game_state["turn"] != client_id:
-        send_message(client_socket, {"type": "system", "message": "It's not your turn!"})
-        return
+    global game_state
+    with state_lock:  # Lock the game state during updates
+        if game_state["turn"] != client_id:
+            send_message(client_socket, {"type": "system", "message": "It's not your turn!"})
+            return
 
-    # Extract move details
-    position = message.get("position")
-    if not position:
-        send_message(client_socket, {"type": "error", "message": "Invalid move!"})
-        return
+        position = message.get("position")
+        if not position:
+            send_message(client_socket, {"type": "error", "message": "Invalid move!"})
+            return
 
-    x, y = map(int, position.split())
-    opponent_id = 1 if client_id == 2 else 2
-    opponent_board = game_state["boards"][opponent_id]
+        try:
+            x, y = map(int, position.split())
+        except ValueError:
+            send_message(client_socket, {"type": "error", "message": "Invalid move format!"})
+            return
 
-    # Check if the move is a hit or miss
-    if (x, y) in opponent_board["ships"]:
-        opponent_board["hits"].append((x, y))
-        result = "hit"
-    else:
-        opponent_board["misses"].append((x, y))
-        result = "miss"
+        opponent_id = 1 if client_id == 2 else 2
+        opponent_board = game_state["boards"][opponent_id]
 
-    # Notify the client of the result
-    send_message(client_socket, {"type": "move_result", "result": result, "position": position})
+        if (x, y) in opponent_board["ships"]:
+            opponent_board["hits"].append((x, y))
+            result = "hit"
+        else:
+            opponent_board["misses"].append((x, y))
+            result = "miss"
 
-    # Switch turn and broadcast updated game state
-    game_state["turn"] = opponent_id
-    broadcast_game_state()
+        send_message(client_socket, {"type": "move_result", "result": result, "position": position})
+        game_state["turn"] = opponent_id
+        broadcast_game_state()
 
 
 def handle_join(client_socket, client_id):
     game_state["players"][client_id] = {"connected": True}  # Track connected players
+    join_message = {"type": "join", "client_id": client_id}
+
+    # Send the join message to the new player with their correct ID
+    send_message(client_socket, join_message)
+
+    # If both players are connected, start the game
     if len(game_state["players"]) == 2:
-        game_state["turn"] = 1  # Set player 1 to go first when both players are connected
-        broadcast_game_state()  # Send initial game state to all clients
+        game_state["turn"] = 1  # Player 1 goes first
+        # Broadcast the initial game state to both players
+        broadcast_game_state()
+
+
 
 def handle_message(client_socket, message, client_id):
-    if message['type'] == 'join':
+    if message["type"] == "join":
         handle_join(client_socket, client_id)
-    elif message['type'] == 'move':
+    elif message["type"] == "move":
         handle_turn(client_socket, message, client_id)
-    elif message['type'] == 'chat':
+    elif message["type"] == "chat":
         handle_chat(client_socket, message, client_id)
+
 
 def broadcast_message(sender_socket, message):
     for client in clients:
         if client != sender_socket:
             send_message(client, message)
 
+
 def handle_client(client_socket, client_id):
     with client_socket:
         print(f"Player {client_id} connected")
         join_message = {"type": "join", "client_id": client_id}
         send_message(client_socket, join_message)
-        broadcast_message(client_socket, join_message)
 
         while True:
             message = receive_message(client_socket)
             if not message:
                 break
             handle_message(client_socket, message, client_id)
+
         clients.remove(client_socket)
         broadcast_message(client_socket, {"type": "system", "message": f"Player {client_id} left"})
+
 
 def start_server(host, port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,6 +147,7 @@ def start_server(host, port):
         logging.error(f"Server error: {e}")
     finally:
         server.close()
+
 
 if __name__ == "__main__":
     start_server("0.0.0.0", 5444)
