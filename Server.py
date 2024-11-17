@@ -8,10 +8,21 @@ logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %
 
 clients = []
 game_state = {
-    "boards": {},
-    "turn": 1,  # Initialize the turn to player 1
-    "players": {}
+    "boards": {
+        1: {  # Player 1's board
+            "ships": [(1, 1), (1, 2), (1, 3)],  # Ship coordinates
+            "hits": [],                         # Coordinates of hits
+            "misses": []                        # Coordinates of misses
+        },
+        2: {  # Player 2's board
+            "ships": [(3, 3), (4, 3), (5, 3)],
+            "hits": [],
+            "misses": []
+        }
+    },
+    "turn": 1,  # Current player's turn
 }
+
 
 def send_message(client_socket, message):
     try:
@@ -39,14 +50,35 @@ def handle_chat(client_socket, message, client_id):
     broadcast_message(client_socket, message)
 
 def handle_turn(client_socket, message, client_id):
-    if game_state["turn"] == client_id:
-        # Process the player's move (e.g., update game_state["boards"] based on the move)
-        
-        # Switch to the other player's turn
-        game_state["turn"] = 1 if game_state["turn"] == 2 else 2
-        broadcast_game_state()  # Broadcast updated game state to all clients
-    else:
+    if game_state["turn"] != client_id:
         send_message(client_socket, {"type": "system", "message": "It's not your turn!"})
+        return
+
+    # Extract move details
+    position = message.get("position")
+    if not position:
+        send_message(client_socket, {"type": "error", "message": "Invalid move!"})
+        return
+
+    x, y = map(int, position.split())
+    opponent_id = 1 if client_id == 2 else 2
+    opponent_board = game_state["boards"][opponent_id]
+
+    # Check if the move is a hit or miss
+    if (x, y) in opponent_board["ships"]:
+        opponent_board["hits"].append((x, y))
+        result = "hit"
+    else:
+        opponent_board["misses"].append((x, y))
+        result = "miss"
+
+    # Notify the client of the result
+    send_message(client_socket, {"type": "move_result", "result": result, "position": position})
+
+    # Switch turn and broadcast updated game state
+    game_state["turn"] = opponent_id
+    broadcast_game_state()
+
 
 def handle_join(client_socket, client_id):
     game_state["players"][client_id] = {"connected": True}  # Track connected players

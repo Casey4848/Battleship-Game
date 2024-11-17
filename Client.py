@@ -44,11 +44,40 @@ def receive_messages(client_socket):
 
 def handle_game_update(state):
     global current_turn
-    print("Updated game state received.")
-    # Render the game state (e.g., print the boards for each player)
-    # You could use `state["boards"]` to display the board positions
-    print(f"Turn: Player {state['turn']}")
-    current_turn = state['turn']
+    print("\n--- Updated Game State ---")
+    for player_id, board in state["boards"].items():
+        if player_id == client_id:
+            print("\nYour Board:")
+            render_board(board, is_own_board=True)
+        else:
+            print("\nOpponent's Board:")
+            render_board(board, is_own_board=False)
+
+    current_turn = state["turn"]
+    print(f"\nIt's Player {state['turn']}'s turn.")
+
+
+def render_board(board, is_own_board):
+    """Render the game board for display."""
+    grid = [["." for _ in range(10)] for _ in range(10)]  # 10x10 grid
+
+    # Place ships (only on the player's own board)
+    if is_own_board:
+        for x, y in board["ships"]:
+            grid[x][y] = "S"
+
+    # Place hits
+    for x, y in board["hits"]:
+        grid[x][y] = "X"
+
+    # Place misses
+    for x, y in board["misses"]:
+        grid[x][y] = "O"
+
+    # Print the grid
+    print("  " + " ".join(map(str, range(10))))
+    for i, row in enumerate(grid):
+        print(f"{i} " + " ".join(row))
 
 def connect_to_server(host, port):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
