@@ -44,7 +44,6 @@ def receive_messages(client_socket):
             handle_game_update(message['state'])  # Render game state update
 
 
-
 def handle_game_update(state):
     global current_turn
     print("\n--- Updated Game State ---")
@@ -83,7 +82,6 @@ def render_board(board, is_own_board):
         print(f"{i} " + " ".join(row))  # Row numbers (0-9)
 
 
-
 def connect_to_server(host, port):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -96,16 +94,21 @@ def connect_to_server(host, port):
 
 
 def send_receive_messages(client):
-    global client_id
+    global client_id, current_turn
     threading.Thread(target=receive_messages, args=(client,), daemon=True).start()
 
     try:
         while True:
             if current_turn == client_id:
                 move = input("Enter your move (row col): ")
+                # Validate move input format
+                if not is_valid_move(move):
+                    print("Invalid move format. Please use 'row col' (e.g., 3 4).")
+                    continue
                 move_data = {"type": "move", "position": move}
                 send_message(client, move_data)
             else:
+                print("\nIt's not your turn! Please wait...")
                 message_text = input("Enter chat message or wait for your turn: ")
                 chat_message = {"type": "chat", "message": message_text}
                 send_message(client, chat_message)
@@ -114,6 +117,15 @@ def send_receive_messages(client):
     finally:
         client.close()
         print("Disconnected from server")
+
+
+def is_valid_move(move):
+    """Check if the move input is in the correct format (e.g., 'row col')."""
+    try:
+        x, y = map(int, move.split())
+        return 0 <= x < 10 and 0 <= y < 10
+    except ValueError:
+        return False
 
 
 if __name__ == "__main__":
