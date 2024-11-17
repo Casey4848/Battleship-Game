@@ -9,18 +9,11 @@ logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %
 clients = []
 game_state = {
     "boards": {
-        1: {  # Player 1's board
-            "ships": [(1, 1), (1, 2), (1, 3)],  # Ship coordinates
-            "hits": [],                         # Coordinates of hits
-            "misses": []                        # Coordinates of misses
-        },
-        2: {  # Player 2's board
-            "ships": [(3, 3), (4, 3), (5, 3)],
-            "hits": [],
-            "misses": []
-        }
+        1: {"ships": [(1, 1), (1, 2), (1, 3)], "hits": [], "misses": []},
+        2: {"ships": [(3, 3), (4, 3), (5, 3)], "hits": [], "misses": []},
     },
-    "turn": 1,  # Current player's turn
+    "turn": 1,
+    "players": {}
 }
 
 
