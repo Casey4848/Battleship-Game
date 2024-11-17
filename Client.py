@@ -45,18 +45,22 @@ def receive_messages(client_socket):
 
 
 def handle_game_update(state):
-    global current_turn
+    global client_id, current_turn
     print("\n--- Updated Game State ---")
+
     for player_id, board in state["boards"].items():
-        if player_id == client_id:
-            print("\nYour Board:")
+        # Ensure player_id and client_id are compared as integers
+        if int(player_id) == int(client_id):
+            print("Rendering Your Board:")
             render_board(board, is_own_board=True)
         else:
-            print("\nOpponent's Board:")
+            print("Rendering Opponent's Board:")
             render_board(board, is_own_board=False)
 
     current_turn = state["turn"]
-    print(f"\nIt's Player {state['turn']}'s turn.")
+    print(f"Current Turn: Player {state['turn']}")
+
+
 
 
 def render_board(board, is_own_board):
