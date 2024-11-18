@@ -45,9 +45,21 @@ def handle_chat(client_socket, message, client_id):
     for client in clients:
         send_message(client, chat_message)
 
+def check_winning_condition():
+    """Check if a player has won the game."""
+    for player_id, board in game_state["boards"].items():
+        # If all of this player's ships are hit, the other player wins
+        if set(map(tuple, board["ships"])) == set(board["hits"]):
+            opponent_id = 1 if int(player_id) == 2 else 2
+            return opponent_id  # Return the opponent as the winner
+    return None
+
+
 def handle_turn(client_socket, message, client_id):
+    """Handle a player's move and check for winning conditions."""
     global game_state
-    with state_lock:  # Lock the game state during updates
+
+    with state_lock:
         if game_state["turn"] != client_id:
             send_message(client_socket, {"type": "system", "message": "It's not your turn!"})
             return
@@ -73,8 +85,40 @@ def handle_turn(client_socket, message, client_id):
             opponent_board["misses"].append((x, y))
             result = "miss"
 
+        # Notify the current player of the result
         send_message(client_socket, {"type": "move_result", "result": result, "position": position})
+
+        # Check for a winner **before switching turns**
+        winner = check_winning_condition()
+        if winner:
+            game_state["game_over"] = True
+            broadcast_game_state()
+            broadcast_message(None, {"type": "system", "message": f"Player {winner} wins!"})
+            return  # Stop processing the turn if the game is over
+
+        # No winner, so update the turn
         game_state["turn"] = opponent_id
+        broadcast_game_state()
+
+
+def reset_game_state():
+    """Reset the game state for a new round."""
+    global game_state
+    game_state = {
+        "boards": {
+            1: {"ships": [(1, 1), (1, 2), (1, 3)], "hits": [], "misses": []},
+            2: {"ships": [(3, 3), (4, 3), (5, 3)], "hits": [], "misses": []},
+        },
+        "turn": 1,
+        "players": {},
+        "game_over": False,
+    }
+
+def handle_new_game(client_socket, message, client_id):
+    """Handle the 'new game' request from a player."""
+    if "new_game" in message and message["new_game"] is True:
+        reset_game_state()
+        broadcast_message(None, {"type": "system", "message": "New game starting!"})
         broadcast_game_state()
 
 def handle_join(client_socket, client_id):
@@ -97,6 +141,8 @@ def handle_message(client_socket, message, client_id):
         handle_turn(client_socket, message, client_id)
     elif message["type"] == "chat":
         handle_chat(client_socket, message, client_id)
+    elif message["type"] == "new_game":
+        handle_new_game(client_socket, message, client_id)
 
 def broadcast_message(sender_socket, message):
     for client in clients:

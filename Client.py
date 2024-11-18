@@ -34,14 +34,31 @@ def receive_messages(client_socket):
         if not message:
             break
         if message['type'] == 'join':
-            client_id = message['client_id']  # Set client_id from server message
-            print(f"Your player ID is {client_id}")  # Display the correct player ID
+            client_id = message['client_id']
+            print(f"Your player ID is {client_id}")
         elif message['type'] == 'chat':
-            print(f"\n{message['message']}")  # Display chat message
+            print(f"\n{message['message']}")
         elif message['type'] == 'system':
-            print(f"\n{message['message']}")  # Display system messages
+            print(f"\n{message['message']}")
+            if "wins" in message['message']:
+                # Prompt player for new game or quit after game over
+                new_game_prompt()
         elif message['type'] == 'game_update':
-            handle_game_update(message['state'])  # Render game state update
+            handle_game_update(message['state'])
+
+def new_game_prompt():
+    """Prompt the player for a new game or quit."""
+    while True:
+        choice = input("Game Over! Do you want to start a new game? (yes/no): ").strip().lower()
+        if choice in ["yes", "y"]:
+            send_message(client, {"type": "new_game", "new_game": True})
+            break
+        elif choice in ["no", "n"]:
+            print("Thanks for playing! Exiting...")
+            client.close()
+            exit()
+        else:
+            print("Invalid choice. Please enter 'yes' or 'no'.")
 
 
 def handle_game_update(state):
