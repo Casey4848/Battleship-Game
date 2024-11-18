@@ -2,6 +2,7 @@ import json
 import socket
 import threading
 import logging
+import argparse
 
 # Configure logging to log error messages
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -197,4 +198,9 @@ def start_server(host, port):
         server.close()
 
 if __name__ == "__main__":
-    start_server("0.0.0.0", 5444)
+    parser = argparse.ArgumentParser(description="Start the Battleship server.")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host IP address to bind the server")
+    parser.add_argument("--port", type=int, required=True, help="Port number to bind the server")
+    args = parser.parse_args()
+    
+    start_server(args.host, args.port)
