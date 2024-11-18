@@ -2,8 +2,8 @@
 This is a simple Battleship game implemented using Python and sockets.
 
 **How to play:**
-1. **Start the server:** Run the `pyhton Server.py` script.
-2. **Connect clients:** Run the `pyhton Client.py --host <IP address of host> --port 5444` script on two different machines or terminals.
+1. **Start the server:** Run the `pyhton Server.py --port <port number>` script.
+2. **Connect clients:** Run the `pyhton Client.py --host <IP address of host> --port <port number>` script on two different machines or terminals.
 3. Clients can send messages to the server.
 4. Game state is syncronized across clients and shown.
 5. Boards will be shown with ships on the board as 'S'
