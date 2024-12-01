@@ -44,7 +44,8 @@ def receive_messages(client_socket):
                 # Prompt player for new game or quit after game over
                 new_game_prompt()
         elif message['type'] == 'game_update':
-            handle_game_update(message['state'])
+            if client_id:  # Check if client_id is set
+                handle_game_update(message['state'])
 
 
 def new_game_prompt():
@@ -80,7 +81,6 @@ def handle_game_update(state):
 
     # Show turn message dynamically
     show_turn_message(current_turn)
-
 
 
 def render_board(board, is_own_board):
@@ -170,8 +170,8 @@ def send_receive_messages(client):
     except socket.error as e:
         logging.error(f"Socket error: {e}")
     finally:
-        client.close()
         print("Disconnected from server")
+        client.close()
 
 
 def is_valid_move(move):
