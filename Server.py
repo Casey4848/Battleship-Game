@@ -79,6 +79,11 @@ def handle_turn(client_socket, message, client_id):
         opponent_id = 1 if client_id == 2 else 2
         opponent_board = game_state["boards"][opponent_id]
 
+        # Check if the position has already been hit or missed
+        if (x, y) in opponent_board["hits"] or (x, y) in opponent_board["misses"]:
+            send_message(client_socket, {"type": "system", "message": f"Position {x} {y} has already been targeted. Please choose a different location!"})
+            return  # Prevent turn advancement, allowing the player to try again
+
         if (x, y) in opponent_board["ships"]:
             opponent_board["hits"].append((x, y))
             result = "hit"
