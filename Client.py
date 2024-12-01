@@ -78,6 +78,10 @@ def handle_game_update(state):
     current_turn = state["turn"]
     print(f"Current Turn: Player {state['turn']}")
 
+    # Show turn message dynamically
+    show_turn_message(current_turn)
+
+
 
 def render_board(board, is_own_board):
     """Render the game board for display with instructions and legend."""
