@@ -183,10 +183,10 @@ if __name__ == "__main__":
     display_game_instructions()  # Display instructions at the start
 
     parser = argparse.ArgumentParser(description="Connect to the Battleship server.")
-    parser.add_argument("--host", type=str, required=True, help="Server IP address")
-    parser.add_argument("--port", type=int, required=True, help="Server port")
+    parser.add_argument("-i", type=str, required=True, help="Server IP address")
+    parser.add_argument("-p", type=int, required=True, help="Server port")
     args = parser.parse_args()
 
-    client = connect_to_server(args.host, args.port)
+    client = connect_to_server(args.i, args.p)
     if client:
         send_receive_messages(client)

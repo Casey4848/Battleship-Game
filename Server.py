@@ -183,10 +183,10 @@ def handle_client(client_socket):
         broadcast_message(client_socket, {"type": "system", "message": f"Player {client_id} left"})
         clients.remove(client_socket)  # Remove from active clients list
 
-def start_server(host, port):
+def start_server(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        server.bind((host, port))
+        server.bind(("0.0.0.0", port))
         server.listen(5)
         actual_host = socket.gethostbyname(socket.gethostname())
         print(f"Server listening on {actual_host}:{port}")
@@ -204,8 +204,7 @@ def start_server(host, port):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start the Battleship server.")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host IP address to bind the server")
-    parser.add_argument("--port", type=int, required=True, help="Port number to bind the server")
+    parser.add_argument("-p", type=int, required=True, help="Port number to bind the server")
     args = parser.parse_args()
     
-    start_server(args.host, args.port)
+    start_server(args.p)
