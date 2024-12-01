@@ -46,6 +46,7 @@ def receive_messages(client_socket):
         elif message['type'] == 'game_update':
             handle_game_update(message['state'])
 
+
 def new_game_prompt():
     """Prompt the player for a new game or quit."""
     while True:
@@ -78,10 +79,16 @@ def handle_game_update(state):
     print(f"Current Turn: Player {state['turn']}")
 
 
-
-
 def render_board(board, is_own_board):
-    """Render the game board for display."""
+    """Render the game board for display with instructions and legend."""
+    # Print the legend and instructions at the top
+    print("\n--- Instructions ---")
+    print("S = Ship | X = Hit | O = Miss")
+    print("Enter your move as 'row col' (e.g., '3 4').")
+    
+    print("\n--- Your Board ---" if is_own_board else "\n--- Opponent's Board ---")
+    print("  " + " ".join(map(str, range(10))))  # Column numbers (0-9)
+    
     grid = [["." for _ in range(10)] for _ in range(10)]  # 10x10 grid
 
     # Place ships (only on the player's own board)
@@ -97,10 +104,33 @@ def render_board(board, is_own_board):
     for x, y in board["misses"]:
         grid[x][y] = "O"  # O represents a miss
 
-    # Print the grid
-    print("  " + " ".join(map(str, range(10))))  # Column numbers (0-9)
+    # Print the grid with row numbers (0-9)
     for i, row in enumerate(grid):
         print(f"{i} " + " ".join(row))  # Row numbers (0-9)
+
+
+def show_turn_message(turn):
+    """Display the current player's turn."""
+    print(f"\n--- It's Player {turn}'s Turn ---")
+
+
+def display_game_instructions():
+    """Display the start of the game with instructions."""
+    print("Welcome to Battleship!")
+    print("Instructions:")
+    print("1. The game is played on a 10x10 grid.")
+    print("2. Players take turns to guess the opponent's ship locations.")
+    print("3. The goal is to sink all of the opponent's ships.")
+    print("4. 'S' marks your ships, 'X' marks hits, and 'O' marks misses.")
+    print("5. Enter your move as 'row col' (e.g., '3 4').")
+    print("\nLet's start the game!")
+
+
+def display_game_over(winner_id):
+    """Display the winner and prompt for a new game."""
+    print(f"\n--- Game Over! ---")
+    print(f"Player {winner_id} wins!")
+    print("Do you want to start a new game? (yes/no)")
 
 
 def connect_to_server(host, port):
@@ -150,6 +180,8 @@ def is_valid_move(move):
 
 
 if __name__ == "__main__":
+    display_game_instructions()  # Display instructions at the start
+
     parser = argparse.ArgumentParser(description="Connect to the Battleship server.")
     parser.add_argument("--host", type=str, required=True, help="Server IP address")
     parser.add_argument("--port", type=int, required=True, help="Server port")
