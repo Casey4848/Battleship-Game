@@ -14,7 +14,8 @@ game_state = {
         2: {"ships": [(3, 3), (4, 3), (5, 3)], "hits": [], "misses": []},
     },
     "turn": 1,
-    "players": {}  # Store player info
+    "players": {},  # Store player info
+    "reset_confirmation": {1: False, 2: False},  # Track reset confirmations from players
 }
 state_lock = threading.Lock()  # Lock for synchronizing game state updates
 
@@ -118,14 +119,25 @@ def reset_game_state():
         "turn": 1,
         "players": {},
         "game_over": False,
+        "reset_confirmation": {1: False, 2: False},  # Reset confirmation status
     }
 
 def handle_new_game(client_socket, message, client_id):
     """Handle the 'new game' request from a player."""
     if "new_game" in message and message["new_game"] is True:
-        reset_game_state()
-        broadcast_message(None, {"type": "system", "message": "New game starting!"})
-        broadcast_game_state()
+        # Mark the confirmation from the player
+        game_state["reset_confirmation"][client_id] = True
+        print(f"Player {client_id} has confirmed to start a new game.")
+
+        # Check if both players have confirmed
+        if all(game_state["reset_confirmation"].values()):
+            print("Both players confirmed. Starting a new game...")
+            reset_game_state()
+            broadcast_message(None, {"type": "system", "message": "New game starting!"})
+            broadcast_game_state()
+        else:
+            # Notify the other player that one player is waiting for confirmation
+            send_message(client_socket, {"type": "system", "message": "Waiting for the other player to confirm."})
 
 def handle_join(client_socket, client_id):
     game_state["players"][client_id] = {"connected": True}  # Track connected players
