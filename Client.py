@@ -34,20 +34,38 @@ def receive_messages(client_socket):
     while True:
         message = receive_message(client_socket)
         if not message:
-            break
+            break  # Client disconnected
+        
+        # Handle different types of messages from the server
         if message['type'] == 'join':
             client_id = message['client_id']
             print(f"Your player ID is {client_id}")
+        
         elif message['type'] == 'system':
+            # Display system messages (like game over or player leaving)
             print(f"\n{message['message']}")
+            
             if "wins" in message['message']:
-                # Prompt player for new game or quit after game over
+                # When a player wins or the game ends, prompt for a new game or quit
                 new_game_prompt()
+            elif "left the game" in message['message']:
+                # If a player disconnects, game over
+                game_over()
+
         elif message['type'] == 'game_update':
+            # Handle the updated game state from the server
             handle_game_update(message['state'])
+        
         elif message['type'] == 'reset_game':
-            # Handle reset confirmation request
+            # Handle reset confirmation requests
             handle_reset_game_request()
+
+def game_over():
+    """End the game and ask if the player wants to restart."""
+    print("The game is over! Thanks for playing.")
+    print("Goodbye!")
+    client.close()  # Close the connection
+    exit()  # Exit the program
 
 
 def new_game_prompt():

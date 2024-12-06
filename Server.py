@@ -16,6 +16,7 @@ game_state = {
     "turn": 1,
     "players": {},  # Store player info
     "reset_confirmation": {1: False, 2: False},  # Track reset confirmations from players
+    "game_over": False
 }
 state_lock = threading.Lock()  # Lock for synchronizing game state updates
 
@@ -178,13 +179,23 @@ def handle_client(client_socket):
             message = receive_message(client_socket)
             if not message:
                 break  # Client disconnected
+
             handle_message(client_socket, message, client_id)
 
         # Handle player disconnection
         with state_lock:
             game_state["players"].pop(client_id, None)  # Remove player from game state
-        broadcast_message(client_socket, {"type": "system", "message": f"Player {client_id} left"})
+
+        # Notify other players that someone disconnected and end the game
+        broadcast_message(client_socket, {"type": "system", "message": f"Player {client_id} left the game."})
+        
+        # Mark the game as over
+        game_state["game_over"] = True
+        broadcast_game_state()  # Update the game state to both players
+
+        # Remove the client from the active players list
         clients.remove(client_socket)  # Remove from active clients list
+
 
 def start_server(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
