@@ -3,6 +3,7 @@ import socket
 import threading
 import logging
 import argparse
+import time
 
 logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -37,8 +38,6 @@ def receive_messages(client_socket):
         if message['type'] == 'join':
             client_id = message['client_id']
             print(f"Your player ID is {client_id}")
-        elif message['type'] == 'chat':
-            print(f"\n{message['message']}")
         elif message['type'] == 'system':
             print(f"\n{message['message']}")
             if "wins" in message['message']:
@@ -157,6 +156,7 @@ def send_receive_messages(client):
     try:
         while True:
             if current_turn == client_id:
+                # It's the player's turn, so prompt them for a move
                 move = input("Enter your move (row col): ")
                 if not is_valid_move(move):
                     print("Invalid move format. Please use 'row col' (e.g., 3 4).")
@@ -164,10 +164,11 @@ def send_receive_messages(client):
                 move_data = {"type": "move", "position": move}
                 send_message(client, move_data)
             else:
+                # It's not the player's turn, so just wait
                 print("\nIt's not your turn! Please wait...")
-                message_text = input("Enter chat message or wait for your turn: ")
-                chat_message = {"type": "chat", "message": message_text}
-                send_message(client, chat_message)
+                while current_turn != client_id:  # Wait until it is the player's turn
+                    time.sleep(1)  # Sleep briefly to prevent busy-waiting (adjust the time as needed)
+
     except socket.error as e:
         logging.error(f"Socket error: {e}")
     finally:

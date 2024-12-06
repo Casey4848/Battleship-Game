@@ -39,13 +39,6 @@ def broadcast_game_state():
     for client in clients:
         send_message(client, message)
 
-def handle_chat(client_socket, message, client_id):
-    chat_message = {
-        "type": "chat",
-        "message": f"Player {client_id} says: {message['message']}",
-    }
-    for client in clients:
-        send_message(client, chat_message)
 
 def check_winning_condition():
     """Check if a player has won the game."""
@@ -157,8 +150,6 @@ def handle_message(client_socket, message, client_id):
         handle_join(client_socket, client_id)
     elif message["type"] == "move":
         handle_turn(client_socket, message, client_id)
-    elif message["type"] == "chat":
-        handle_chat(client_socket, message, client_id)
     elif message["type"] == "new_game":
         handle_new_game(client_socket, message, client_id)
 
