@@ -10,8 +10,9 @@ This is a simple Battleship game implemented using Python and sockets.
 6. Ships are automatically put on board for now.
 7. Once all ships are eliminated, press enter and the game will ask if you want to reset or quit.
 8. Game tells each playr whos turn it is and keeps track of it.
-9.If a player leaves it will end the game after sending the other client a messsage.
+9. If a player leaves it will end the game after sending the other client a messsage.
 10. Added in encryption for connecting clients and server.
+11. I have a UI inplemented with tkinter, but it was not complete.
 
 
 **Technologies used:**
@@ -19,6 +20,24 @@ This is a simple Battleship game implemented using Python and sockets.
 * Sockets
 * Threading
 * openssl to generate encryption keys
+
+**Roadmap:**
+* Short-term improvements:
+  Add a timer to limit the time each player has to take a turn.
+  Include a feature to chat with other players in real-time.
+* Long-term improvements:
+  Implement AI for single-player mode.
+  Enhance the visual UI with better graphics and animations.
+  Allow players to customize their ships and boards.
+
+**Retrospective**
+* What Went Right:
+  The communication between the server and client works smoothly, with the game state being updated in real-time.
+  The game’s rules are enforced correctly, and both players can take turns and make moves without issues.
+  SSL encryption was successfully integrated for secure communication between the server and client.
+* What Could Be Improved:
+  Scalability: The game works well for two players, but there is no clear path for handling larger game rooms or matchmaking.
+  User Interface: The UI is in another branch and is functional but not finished.
 
 **Additional resources:**
 * https://github.com/Casey4848/Battleship-Game/blob/2a258803ddb1d3522a44704f605c80d672e60fb0/Statement%20of%20Work%20(SOW).md
