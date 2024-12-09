@@ -4,6 +4,7 @@ import threading
 import logging
 import argparse
 import time
+import ssl
 
 logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -157,10 +158,16 @@ def display_game_instructions():
 
 
 def connect_to_server(host, port):
+    # Create an SSL context
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE  # For testing, do not verify server certificate
+    
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client = context.wrap_socket(client, server_hostname=host)  # Wrap the socket with SSL
     try:
         client.connect((host, port))
-        print(f"Connected to server at {host}:{port}")
+        print(f"Connected to server at {host}:{port} with SSL encryption")
         return client
     except socket.error as e:
         logging.error(f"Connection error: {e}")

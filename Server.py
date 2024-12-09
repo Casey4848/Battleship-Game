@@ -3,6 +3,7 @@ import socket
 import threading
 import logging
 import argparse
+import ssl
 
 # Configure logging to log error messages
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -198,6 +199,8 @@ def handle_client(client_socket):
 
 
 def start_server(port):
+    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")  # Load the certificate and key
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         server.bind(("0.0.0.0", port))
@@ -207,8 +210,17 @@ def start_server(port):
         
         while len(game_state["players"]) < 2:  # Only allow 2 players to join
             client_socket, addr = server.accept()
-            clients.append(client_socket)
-            client_handler = threading.Thread(target=handle_client, args=(client_socket,))
+
+            # Wrap the accepted client socket with SSL to secure the communication
+            ssl_client_socket = context.wrap_socket(client_socket, server_side=True)
+
+            print(f"Secure Connection established with {addr}")
+            
+            # Add the SSL-wrapped client socket to the clients list
+            clients.append(ssl_client_socket)
+
+            # Start a new thread to handle the client communication
+            client_handler = threading.Thread(target=handle_client, args=(ssl_client_socket,))
             client_handler.start()
 
     except socket.error as e:
