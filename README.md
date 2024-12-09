@@ -10,9 +10,10 @@ This is a simple Battleship game implemented using Python and sockets.
 6. Ships are automatically put on board for now.
 7. Once all ships are eliminated, press enter and the game will ask if you want to reset or quit.
 8. Game tells each playr whos turn it is and keeps track of it.
-9. If a player leaves it will end the game after sending the other client a messsage.
-10. Added in encryption for connecting clients and server.
-11. I have a UI inplemented with tkinter, but it was not complete.
+9. Added error handling for when a player leaves/disconects it will end the game after sending the other client a messsage.
+10. There is error handling on the server side as well for disconects and connection issues.
+11. Added in encryption for connecting clients and server.
+12. I have a UI inplemented with tkinter, but it was not complete.
 
 
 **Technologies used:**
