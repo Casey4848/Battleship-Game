@@ -157,14 +157,25 @@ def display_game_instructions():
     print("\nLet's start the game!")
 
 
-def connect_to_server(host, port):
+def connect_to_server(host, port, certfile="cert.pem", keyfile="key.pem"):
     # Create an SSL context
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
     context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE  # For testing, do not verify server certificate
+    context.verify_mode = ssl.CERT_NONE
     
+    # Load the certificate and key files
+    try:
+        context.load_cert_chain(certfile=certfile, keyfile=keyfile)
+    except Exception as e:
+        logging.error(f"Failed to load certificate or key: {e}")
+        return None
+    
+    # Create a socket
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client = context.wrap_socket(client, server_hostname=host)  # Wrap the socket with SSL
+    
+    # Wrap the socket with SSL
+    client = context.wrap_socket(client, server_hostname=host)
+    
     try:
         client.connect((host, port))
         print(f"Connected to server at {host}:{port} with SSL encryption")
