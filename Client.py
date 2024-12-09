@@ -92,12 +92,13 @@ def handle_game_update(state):
 
     for player_id, board in state["boards"].items():
         if int(player_id) == int(client_id):
-            render_board(board, is_own_board=True)
+            render_board(board, is_own_board=True)  # Render your own board
         else:
-            render_board(board, is_own_board=False)
+            render_board(board, is_own_board=False)  # Render opponent's board
 
     current_turn = state["turn"]
-    root.after(0, update_turn_label, f"Current Turn: Player {state['turn']}")
+    update_turn_label(f"Current Turn: Player {state['turn']}")
+
 
 
 def render_board(board, is_own_board):
@@ -105,15 +106,20 @@ def render_board(board, is_own_board):
     for i in range(10):
         for j in range(10):
             cell = board_buttons[(i, j)]
+
             if (i, j) in board["hits"]:
-                cell.config(text="X", bg="red")
+                cell.config(text="X", bg="red")  # Hit
             elif (i, j) in board["misses"]:
-                cell.config(text="O", bg="blue")
+                cell.config(text="O", bg="blue")  # Miss
             elif (i, j) in board["ships"]:
                 if is_own_board:
-                    cell.config(text="S", bg="green")
+                    cell.config(text="S", bg="green")  # Own ships are visible
                 else:
-                    cell.config(text="", bg="gray")
+                    cell.config(text="", bg="gray")  # Hide ships on the opponent's board
+            else:
+                cell.config(text="", bg="lightgray")  # Empty cell
+
+
 
 
 def update_turn_label(turn_message):
