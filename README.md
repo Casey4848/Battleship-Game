@@ -17,6 +17,8 @@ This is a simple Battleship game implemented using Python and sockets.
 **Technologies used:**
 * Python
 * Sockets
+* Threading
+* openssl to generate encryption keys
 
 **Additional resources:**
 * https://github.com/Casey4848/Battleship-Game/blob/2a258803ddb1d3522a44704f605c80d672e60fb0/Statement%20of%20Work%20(SOW).md
