@@ -41,6 +41,13 @@ def broadcast_game_state():
     for client in clients:
         send_message(client, message)
 
+def broadcast_turn():
+    """Notify both players of whose turn it is."""
+    turn_message = {
+        "type": "turn_update",
+        "turn": game_state["turn"]
+    }
+    broadcast_message(None, turn_message)
 
 def check_winning_condition():
     """Check if a player has won the game."""
@@ -50,7 +57,6 @@ def check_winning_condition():
             opponent_id = 1 if int(player_id) == 2 else 2
             return opponent_id  # Return the opponent as the winner
     return None
-
 
 def handle_turn(client_socket, message, client_id):
     """Handle a player's move and check for winning conditions."""
@@ -100,8 +106,8 @@ def handle_turn(client_socket, message, client_id):
 
         # No winner, so update the turn
         game_state["turn"] = opponent_id
+        broadcast_turn()  # Notify clients of the turn change
         broadcast_game_state()
-
 
 def reset_game_state():
     """Reset the game state for a new round."""
